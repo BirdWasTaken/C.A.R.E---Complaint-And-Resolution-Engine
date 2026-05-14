@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C.A.R.E - My Complaints</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">C.A.R.E</div>
+            <div class="user-info">
+                <span id="welcome-text">Welcome, Student</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <span class="menu-title">Menu</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="sidebar-link">
+                    <span class="icon">🏠</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="submit-complaint.html" class="sidebar-link">
+                    <span class="icon">📝</span>
+                    <span>Submit Complaint</span>
+                </a>
+                <a href="my-complaints.html" class="sidebar-link active">
+                    <span class="icon">📋</span>
+                    <span>My Complaints</span>
+                </a>
+                <a href="login.html" class="sidebar-link logout" onclick="logout()">
+                    <span class="icon">🚪</span>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-content">
+            <div class="page-header">
+                <h1>My Complaints</h1>
+                <p>View and track all your submitted complaints</p>
+            </div>
+
+            <div class="complaints-list" id="complaints-container"></div>
+
+            <div id="empty-state" class="empty-state" style="display: none;">
+                <div class="empty-state-icon">🔍</div>
+                <h3>No complaints found</h3>
+                <p>No complaints match the selected filter.</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="complaint-details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Complaint Details</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>ID:</strong> <span id="detail-id"></span></p>
+                <p><strong>Title:</strong> <span id="detail-title"></span></p>
+                <p><strong>Status:</strong> <span id="detail-status"></span></p>
+                <p><strong>Category:</strong> <span id="detail-category"></span></p>
+                <p><strong>Location:</strong> <span id="detail-location"></span></p>
+                <p><strong>Priority:</strong> <span id="detail-priority"></span></p>
+                <p><strong>Description:</strong> <span id="detail-description"></span></p>
+                <p><strong>Admin Response:</strong> <span id="detail-response"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 C.A.R.E – Complaint And Resolution Engine</p>
+    </footer>
+
+    <script>
+        if (!localStorage.getItem("userId")) {
+            window.location.href = "login.html";
+        }
+        const userId = localStorage.getItem("userId") || "1";
+        const userName = localStorage.getItem("userName") || "Student";
+
+        document.getElementById("welcome-text").innerText = `Welcome, ${userName}`;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const container = document.getElementById("complaints-container");
+
+            fetch(`http://localhost:8080/api/complaints/user/${userId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const complaints = data.data;
+
+                    if (!complaints || complaints.length === 0) {
+                        container.innerHTML = "<p>No complaints found</p>";
+                        return;
+                    }
+
+                    complaints.forEach(c => {
+                        const card = `
+                            <div class="complaint-card-detailed">
+                                <div class="complaint-header">
+                                    <div>
+                                        <h3>${c.title}</h3>
+                                        <p class="complaint-id">Complaint ID: #${c.id}</p>
+                                    </div>
+                                    <span class="status-badge">${c.status}</span>
+                                </div>
+
+                                <div class="complaint-body">
+                                    <p><strong>Category:</strong> ${c.category}</p>
+                                    <p><strong>Location:</strong> ${c.location}</p>
+                                    <p><strong>Priority:</strong> ${c.priority}</p>
+                                </div>
+
+                                <div class="complaint-footer">
+                                    <button onclick="viewDetails(${c.id})" class="btn-small btn-primary">
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+
+                        container.innerHTML += card;
+                    });
+                })
+                .catch(err => {
+                    container.innerHTML = "<p>Error loading complaints</p>";
+                    console.error(err);
+                });
+        });
+
+        function viewDetails(id) {
+            fetch(`http://localhost:8080/api/complaints/${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    const c = data.data;
+
+                    document.getElementById("detail-id").innerText = c.id;
+                    document.getElementById("detail-title").innerText = c.title;
+                    document.getElementById("detail-status").innerText = c.status;
+                    document.getElementById("detail-category").innerText = c.category;
+                    document.getElementById("detail-location").innerText = c.location;
+                    document.getElementById("detail-priority").innerText = c.priority;
+                    document.getElementById("detail-description").innerText = c.description;
+                    document.getElementById("detail-response").innerText = c.adminResponse || "No response yet";
+
+                    document.getElementById("complaint-details-modal").style.display = "block";
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Failed to load complaint details");
+                });
+        }
+
+        document.querySelectorAll(".modal-close").forEach(btn => {
+            btn.onclick = () => {
+                document.getElementById("complaint-details-modal").style.display = "none";
+            };
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+</html>

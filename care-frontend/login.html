@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C.A.R.E - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">C.A.R.E</div>
+            <nav class="nav">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="login.html" class="nav-link active">Login</a>
+                <a href="register.html" class="nav-link">Register</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="form-page">
+        <div class="form-container">
+            <div class="form-header">
+                <h1>Welcome Back</h1>
+                <p>Login to access your dashboard</p>
+            </div>
+
+            <form class="form" id="login-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+
+                <div id="login-message" style="margin-bottom: 10px; font-weight: bold;"></div>
+
+                <button type="submit" class="btn btn-primary btn-full">Login</button>
+
+                <p class="form-footer">
+                    Don't have an account? 
+                    <a href="register.html" class="link">Register here</a>
+                </p>
+
+                <div class="divider">OR</div>
+
+                <a href="admin-login.html" class="btn btn-outline">Admin Login</a>
+            </form>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 C.A.R.E – Complaint And Resolution Engine</p>
+    </footer>
+
+    <script>
+        console.log("login script loaded");
+    document.getElementById("login-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        console.log("login button clicked");
+
+        const messageBox = document.getElementById("login-message");
+
+        const loginData = {
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value
+        };
+
+        console.log("sending login request", loginData);
+
+        fetch("http://localhost:8080/api/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(loginData)
+        })
+        .then(res => {
+            console.log("raw response received", res);
+            return res.json();
+        })
+        .then(data => {
+            console.log("Login response:", data);
+            console.log("User data:", data.data);
+            console.log("User id:", data.data.id);
+            console.log("User fullName:", data.data.fullName);
+
+            if (data.success) {
+                localStorage.setItem("userId", data.data.userId);
+                localStorage.setItem("userName", data.data.fullName || "Student");
+
+                messageBox.style.color = "green";
+                messageBox.textContent = "Login successful!";
+
+                setTimeout(() => {
+                    window.location.href = "dashboard.html";
+                }, 800);
+            } else {
+                messageBox.style.color = "red";
+                messageBox.textContent = data.message || "Login failed";
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            messageBox.style.color = "red";
+            messageBox.textContent = "Error connecting to server";
+        });
+    });
+</script>
+</body>
+</html>

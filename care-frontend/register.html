@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C.A.R.E - Register</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">C.A.R.E</div>
+            <nav class="nav">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="login.html" class="nav-link">Login</a>
+                <a href="register.html" class="nav-link active">Register</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="form-page">
+        <div class="form-container">
+            <div class="form-header">
+                <h1>Create Account</h1>
+                <p>Register to start submitting complaints</p>
+            </div>
+
+            <form class="form" id="register-form">
+                <div class="form-group">
+                    <label for="fullname">Full Name</label>
+                    <input type="text" id="fullname" placeholder="Enter your full name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="student-id">Student ID</label>
+                    <input type="text" id="student-id" placeholder="Enter your student ID" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" placeholder="Enter your phone number" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Create a password" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" placeholder="Confirm your password" required>
+                </div>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" required> I agree to the Terms and Conditions
+                </label>
+
+                <div id="register-message" style="margin: 12px 0; font-weight: bold;"></div>
+
+                <button type="submit" class="btn btn-primary btn-full">Register</button>
+
+                <p class="form-footer">
+                    Already have an account? <a href="login.html" class="link">Login here</a>
+                </p>
+            </form>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 C.A.R.E – Complaint And Resolution Engine</p>
+    </footer>
+
+    <script>
+        document.getElementById("register-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const messageBox = document.getElementById("register-message");
+
+            const fullName = document.getElementById("fullname").value.trim();
+            const studentId = document.getElementById("student-id").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirm-password").value;
+
+            if (password !== confirmPassword) {
+                messageBox.style.color = "red";
+                messageBox.textContent = "Passwords do not match.";
+                return;
+            }
+
+            const registerData = {
+                fullName: fullName,
+                studentId: studentId,
+                email: email,
+                phone: phone,
+                password: password,
+                role: "USER"
+            };
+
+            fetch("http://localhost:8080/api/auth/signup", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(registerData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    messageBox.style.color = "green";
+                    messageBox.textContent = "Registration successful! Redirecting to login...";
+
+                    document.getElementById("register-form").reset();
+
+                    setTimeout(() => {
+                        window.location.href = "login.html";
+                    }, 1000);
+                } else {
+                    messageBox.style.color = "red";
+                    messageBox.textContent = data.message || "Registration failed.";
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                messageBox.style.color = "red";
+                messageBox.textContent = "Error connecting to server.";
+            });
+        });
+    </script>
+</body>
+</html>

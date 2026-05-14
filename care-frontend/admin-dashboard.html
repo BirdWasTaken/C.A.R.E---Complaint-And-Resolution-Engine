@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C.A.R.E - Admin Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">C.A.R.E Admin</div>
+            <div class="user-info">
+                <span id="welcome-text">Welcome, Admin</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <span class="menu-title">Admin Menu</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="admin-dashboard.html" class="sidebar-link active">
+                    <span class="icon">🏠</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" onclick="adminLogout()" class="sidebar-link logout">
+                    <span class="icon">🚪</span>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-content">
+            <div class="welcome-banner">
+                <h1>Admin Dashboard</h1>
+                <p>Manage and resolve student complaints efficiently</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">📊</div>
+                    <div class="stat-info">
+                        <h3 id="total-count">0</h3>
+                        <p>Total Complaints</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red">🔴</div>
+                    <div class="stat-info">
+                        <h3 id="open-count">0</h3>
+                        <p>Open</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">⏳</div>
+                    <div class="stat-info">
+                        <h3 id="progress-count">0</h3>
+                        <p>In Progress</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">✅</div>
+                    <div class="stat-info">
+                        <h3 id="resolved-count">0</h3>
+                        <p>Resolved</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-heading">All Complaints</h2>
+                <div class="admin-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="complaints-tbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="review-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Review Complaint</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-info">
+                    <p><strong>Complaint ID:</strong> <span id="modal-complaint-id"></span></p>
+                    <p><strong>Title:</strong> <span id="modal-complaint-title"></span></p>
+                    <p><strong>Current Status:</strong> <span id="modal-current-status"></span></p>
+                </div>
+
+                <div class="form-group">
+                    <label for="status-select">Change Status:</label>
+                    <select id="status-select" class="status-dropdown">
+                        <option value="OPEN">OPEN</option>
+                        <option value="IN_PROGRESS">IN_PROGRESS</option>
+                        <option value="RESOLVED">RESOLVED</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="admin-notes">Admin Response:</label>
+                    <textarea id="admin-notes" rows="4" placeholder="Add response for this complaint..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="update-status-btn">Update Status</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 C.A.R.E – Complaint And Resolution Engine</p>
+    </footer>
+
+    <script>
+        // Protect admin page
+        if (localStorage.getItem("isAdmin") !== "true") {
+            window.location.href = "admin-login.html";
+        }
+
+        // Show admin name
+        const adminName = localStorage.getItem("adminName") || "Apurv";
+        document.getElementById("welcome-text").innerText = `Welcome, ${adminName}`;
+
+        let selectedComplaintId = null;
+
+        // Load dashboard stats
+        fetch("http://localhost:8080/api/complaints/admin/stats")
+            .then(res => res.json())
+            .then(data => {
+                const stats = data.data || {};
+
+                document.getElementById("total-count").innerText = stats.totalComplaints || 0;
+                document.getElementById("open-count").innerText = stats.openComplaints || 0;
+                document.getElementById("progress-count").innerText = stats.inProgressComplaints || 0;
+                document.getElementById("resolved-count").innerText = stats.resolvedComplaints || 0;
+            })
+            .catch(err => {
+                console.error("Stats error:", err);
+            });
+
+        // Load all complaints
+        fetch("http://localhost:8080/api/complaints/admin/all")
+            .then(res => res.json())
+            .then(data => {
+                const complaints = data.data || [];
+                const tbody = document.getElementById("complaints-tbody");
+                tbody.innerHTML = "";
+
+                if (complaints.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align:center;">No complaints found</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                complaints.forEach(c => {
+                    const row = `
+                        <tr>
+                            <td>#${c.id}</td>
+                            <td>${c.title}</td>
+                            <td>${c.category}</td>
+                            <td>${c.priority}</td>
+                            <td><span class="status-badge">${c.status}</span></td>
+                            <td>
+                                <button class="btn-small btn-primary" onclick="openReviewModal(${c.id}, '${escapeQuotes(c.title)}', '${c.status}', '${escapeQuotes(c.adminResponse || "")}')">
+                                    Review
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            })
+            .catch(err => {
+                console.error("Complaints error:", err);
+                document.getElementById("complaints-tbody").innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align:center;">Failed to load complaints</td>
+                    </tr>
+                `;
+            });
+
+        function openReviewModal(id, title, status, adminResponse) {
+            selectedComplaintId = id;
+
+            document.getElementById("modal-complaint-id").innerText = "#" + id;
+            document.getElementById("modal-complaint-title").innerText = title;
+            document.getElementById("modal-current-status").innerText = status;
+            document.getElementById("status-select").value = status;
+            document.getElementById("admin-notes").value = adminResponse || "";
+
+            document.getElementById("review-modal").style.display = "block";
+        }
+
+        document.getElementById("update-status-btn").addEventListener("click", function () {
+            if (!selectedComplaintId) return;
+
+            const requestBody = {
+                status: document.getElementById("status-select").value,
+                adminResponse: document.getElementById("admin-notes").value.trim()
+            };
+
+            fetch(`http://localhost:8080/api/complaints/admin/${selectedComplaintId}/status`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Complaint updated successfully.");
+                    document.getElementById("review-modal").style.display = "none";
+                    window.location.reload();
+                } else {
+                    alert(data.message || "Failed to update complaint.");
+                }
+            })
+            .catch(err => {
+                console.error("Update error:", err);
+                alert("Something went wrong while updating complaint.");
+            });
+        });
+
+        // Close modal
+        document.querySelector(".modal-close").onclick = () => {
+            document.getElementById("review-modal").style.display = "none";
+        };
+
+        document.querySelector(".modal-cancel").onclick = () => {
+            document.getElementById("review-modal").style.display = "none";
+        };
+
+        function adminLogout() {
+            localStorage.removeItem("isAdmin");
+            localStorage.removeItem("adminName");
+            localStorage.removeItem("adminEmail");
+            window.location.href = "admin-login.html";
+        }
+
+        function escapeQuotes(str) {
+            return String(str)
+                .replace(/\\/g, "\\\\")
+                .replace(/'/g, "\\'")
+                .replace(/"/g, "&quot;");
+        }
+    </script>
+</body>
+</html>

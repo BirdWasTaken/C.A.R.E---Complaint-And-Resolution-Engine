@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C.A.R.E - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">C.A.R.E</div>
+            <div class="user-info">
+                <span id="welcome-text">Welcome</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <span class="menu-title">Menu</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="sidebar-link active">
+                    <span class="icon">🏠</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="submit-complaint.html" class="sidebar-link">
+                    <span class="icon">📝</span>
+                    <span>Submit Complaint</span>
+                </a>
+                <a href="my-complaints.html" class="sidebar-link">
+                    <span class="icon">📋</span>
+                    <span>My Complaints</span>
+                </a>
+                <a href="login.html" class="sidebar-link logout" onclick="logout()">
+                    <span class="icon">🚪</span>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-content">
+            <div class="welcome-banner">
+                <h1>Welcome back!</h1>
+                <p>Here's what's happening with your complaints today.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">📊</div>
+                    <div class="stat-info">
+                        <h3 id="total-count">0</h3>
+                        <p>Total Complaints</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">⏳</div>
+                    <div class="stat-info">
+                        <h3 id="progress-count">0</h3>
+                        <p>In Progress</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">✅</div>
+                    <div class="stat-info">
+                        <h3 id="resolved-count">0</h3>
+                        <p>Resolved</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-heading">Recent Complaints</h2>
+                <div class="complaints-list" id="recent-complaints"></div>
+            </div>
+
+            <div class="quick-actions">
+                <h2 class="section-heading">Quick Actions</h2>
+                <div class="action-buttons">
+                    <a href="submit-complaint.html" class="action-btn">
+                        <span class="action-icon">➕</span>
+                        <span>Submit New Complaint</span>
+                    </a>
+                    <a href="my-complaints.html" class="action-btn">
+                        <span class="action-icon">👁️</span>
+                        <span>View My Complaints</span>
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 C.A.R.E – Complaint And Resolution Engine</p>
+    </footer>
+
+    <script>
+        if (!localStorage.getItem("userId")) {
+            window.location.href = "login.html";
+        }
+        const userId = localStorage.getItem("userId") || "1";
+        const userName = localStorage.getItem("userName") || "Student";
+
+        document.getElementById("welcome-text").innerText = `Welcome, ${userName}`;
+
+        fetch(`http://localhost:8080/api/complaints/user/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                const complaints = data.data || [];
+
+                const total = complaints.length;
+                const progress = complaints.filter(c => c.status === "IN_PROGRESS").length;
+                const resolved = complaints.filter(c => c.status === "RESOLVED").length;
+
+                document.getElementById("total-count").innerText = total;
+                document.getElementById("progress-count").innerText = progress;
+                document.getElementById("resolved-count").innerText = resolved;
+
+                const container = document.getElementById("recent-complaints");
+                container.innerHTML = "";
+
+                if (complaints.length === 0) {
+                    container.innerHTML = "<p>No complaints yet.</p>";
+                    return;
+                }
+
+                complaints.slice(0, 3).forEach(c => {
+                    const card = `
+                        <div class="complaint-card">
+                            <div class="complaint-header">
+                                <div>
+                                    <h3>${c.title}</h3>
+                                    <p class="complaint-id">#${c.id}</p>
+                                </div>
+                                <span class="status-badge">${c.status}</span>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById("recent-complaints").innerHTML = "<p>Failed to load dashboard data.</p>";
+            });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+</html>

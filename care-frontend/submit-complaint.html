@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C.A.R.E - Submit Complaint</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">C.A.R.E</div>
+            <div class="user-info">
+                <span id="welcome-text">Welcome</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <span class="menu-title">Menu</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="sidebar-link">
+                    <span class="icon">🏠</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="submit-complaint.html" class="sidebar-link active">
+                    <span class="icon">📝</span>
+                    <span>Submit Complaint</span>
+                </a>
+                <a href="my-complaints.html" class="sidebar-link">
+                    <span class="icon">📋</span>
+                    <span>My Complaints</span>
+                </a>
+                <a href="login.html" class="sidebar-link logout">
+                    <span class="icon">🚪</span>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-content">
+            <div class="page-header">
+                <h1>Submit New Complaint</h1>
+                <p>Fill out the form below to submit your complaint</p>
+            </div>
+
+            <div class="form-container-dashboard">
+                <form class="form" id="complaint-form">
+                    <div class="form-group">
+                        <label for="complaint-title">Complaint Title</label>
+                        <input type="text" id="complaint-title" placeholder="Brief title of your complaint" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" required>
+                            <option value="">Select a category</option>
+                            <option value="INFRASTRUCTURE">Infrastructure</option>
+                            <option value="FACILITIES">Facilities</option>
+                            <option value="ACADEMIC">Academic</option>
+                            <option value="ADMINISTRATION">Administration</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location">Location</label>
+                        <input type="text" id="location" placeholder="Where is the issue located?" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="priority">Priority Level</label>
+                        <select id="priority" required>
+                            <option value="">Select priority</option>
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="URGENT">Urgent</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Detailed Description</label>
+                        <textarea id="description" rows="6" placeholder="Provide a detailed description of your complaint" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="attachment">Attachment (Optional)</label>
+                        <input type="file" id="attachment">
+                    </div>
+
+                    <div id="form-message" style="margin-bottom: 15px; font-weight: bold;"></div>
+
+                    <div class="form-actions">
+                        <a href="dashboard.html" class="btn btn-outline">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Submit Complaint</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 C.A.R.E – Complaint And Resolution Engine</p>
+    </footer>
+
+   <script>
+    if (!localStorage.getItem("userId")) {
+            window.location.href = "login.html";
+        }
+        const userId = localStorage.getItem("userId") || "1";
+        const userName = localStorage.getItem("userName") || "Student";
+
+        document.getElementById("welcome-text").innerText = `Welcome, ${userName}`;
+    document.getElementById("complaint-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const messageBox = document.getElementById("form-message");
+
+        const complaintData = {
+            userId: Number(localStorage.getItem("userId")),
+            title: document.getElementById("complaint-title").value.trim(),
+            category: document.getElementById("category").value,
+            location: document.getElementById("location").value.trim(),
+            priority: document.getElementById("priority").value,
+            description: document.getElementById("description").value.trim()
+        };
+
+        fetch("http://localhost:8080/api/complaints", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(complaintData)
+        })
+        .then(async (response) => {
+            const data = await response.json();
+
+            if (data.success) {
+                messageBox.style.color = "green";
+                messageBox.textContent = "Complaint submitted successfully.";
+
+                document.getElementById("complaint-form").reset();
+
+                setTimeout(() => {
+                    window.location.href = "my-complaints.html";
+                }, 1000);
+            } else {
+                messageBox.style.color = "red";
+                messageBox.textContent = data.message || "Failed to submit complaint.";
+                console.log(data);
+            }
+        })
+        .catch((error) => {
+            console.error(error);
+            messageBox.style.color = "red";
+            messageBox.textContent = "Something went wrong while submitting the complaint.";
+        });
+    });
+</script>
+</body>
+</html>

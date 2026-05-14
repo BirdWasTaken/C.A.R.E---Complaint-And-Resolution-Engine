@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C.A.R.E - Admin Login</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <div class="container">
+        <div class="logo">C.A.R.E</div>
+        <nav class="nav">
+            <a href="index.html" class="nav-link">Home</a>
+            <a href="login.html" class="nav-link">Student Login</a>
+        </nav>
+    </div>
+</header>
+
+<main class="form-page">
+    <div class="form-container">
+        <div class="form-header">
+            <h1>Admin Access</h1>
+            <p>Login to manage complaints and resolutions</p>
+        </div>
+
+        <form class="form" id="admin-login-form">
+            <div class="form-group">
+                <label for="admin-email">Admin Email</label>
+                <input type="email" id="admin-email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="admin-password">Password</label>
+                <input type="password" id="admin-password" required>
+            </div>
+
+            <div id="admin-login-message" style="margin-bottom: 10px; font-weight: bold;"></div>
+
+            <button type="submit" class="btn btn-primary btn-full">Admin Login</button>
+
+            <p class="form-footer">
+                Not an admin? 
+                <a href="login.html" class="link">Student login</a>
+            </p>
+        </form>
+    </div>
+</main>
+
+<footer class="footer">
+    <p>© 2026 C.A.R.E – Complaint And Resolution Engine</p>
+</footer>
+
+<script>
+    document.getElementById("admin-login-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const messageBox = document.getElementById("admin-login-message");
+
+        const email = document.getElementById("admin-email").value.trim();
+        const password = document.getElementById("admin-password").value;
+
+        // 🔥 HARD-CODED PERMANENT ADMIN
+        if (email === "apubha030905@gmail.com" && password === "Apurvbharate@04") {
+
+            // Store admin session
+            localStorage.setItem("isAdmin", "true");
+            localStorage.setItem("adminName", "Apurv");
+            localStorage.setItem("adminEmail", email);
+
+            messageBox.style.color = "green";
+            messageBox.textContent = "Admin login successful!";
+
+            setTimeout(() => {
+                window.location.href = "admin-dashboard.html";
+            }, 800);
+
+        } else {
+            messageBox.style.color = "red";
+            messageBox.textContent = "Invalid admin credentials.";
+        }
+    });
+</script>
+
+</body>
+</html>
